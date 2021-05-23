@@ -4,7 +4,6 @@ const configure = require('./config')
 const sequelize = require('./config/db')
 const routes = require('./routes')
 const defaultErrorHandler = require('./helpers/defaultErrorHandler')
-// const passport = require('./config/passport')
 
 const app = express()
 
