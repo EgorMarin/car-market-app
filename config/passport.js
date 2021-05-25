@@ -1,8 +1,8 @@
 const passport = require('passport');
 const passportJwt = require('passport-jwt');
+
 const { SECRET_KEY } = require('../config/constanst');
 const { User } = require('../models');
-
 
 module.exports = (app) => {
   passport.use(

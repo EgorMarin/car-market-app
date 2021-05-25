@@ -1,41 +1,73 @@
-const router = require('express').Router()
-const { Vehicle, User } = require('../models')
+const passport = require('passport');
+const router = require('express').Router();
 
-router.get('/', async (req, res) => {
-  try {
-    const vehicles = await Vehicle.findAll({
-      include: {
-        model: User,
-      }
-    })
+const { Vehicle, User, Model, Brand } = require('../models')
+const { checkIfOwner } = require('../middlewares/vehicles')
 
-    res.json(vehicles)
-  } catch (error) {
-    console.log(error);
-  }
-})
-
-router.post('/', async (req, res) => {
-  const { userId, brand, model } = req.body
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
 
   try {
-    const vehicle = await Vehicle.create({
-      userId, brand, model
+    const vehicle = await Vehicle.findOne({
+      where: { id },
+      include: [
+        {
+          model: User,
+          as: 'owner',
+        },
+        {
+          model: Model,
+          include: Brand
+        },
+      ]
     })
 
     res.json(vehicle)
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    next(e);
   }
 })
 
-router.delete('/:id', async (req, res) => {
+router.post('/', passport.authenticate('jwt'), async (req, res) => {
+  const { modelId } = req.body
+  const userId = req.user.id
+
+  console.log('req.user', userId, 5565446);
+
   try {
-    await Vehicle.destroy({ where: { id: req.params.id }})
+    const vehicle = await Vehicle.create({ userId, modelId })
+
+    res.json(vehicle)
+  } catch (e) {
+    next(e);
+  }
+})
+
+router.patch('/', [passport.authenticate('jwt'), checkIfOwner], async (req, res) => {
+  const { modelId, name } = req.body
+  const userId = req.user.id
+
+  try {
+    const vehicle = await Vehicle.findOne({ userId, modelId })
+
+    // vehicle.name = name
+    // await vehicle.save()
+
+    res.json(vehicle)
+  } catch (e) {
+    next(e);
+  }
+})
+
+router.delete('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    await Vehicle.destroy({ where: { id }})
 
     res.json('deleted')
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    next(e);
   }
 })
 

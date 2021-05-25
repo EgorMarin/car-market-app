@@ -6,8 +6,8 @@ router.get('/:id', async (req, res) => {
     const user = await User.findByPk(req.params.id)
 
     res.json(user)
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    next(e);
   }
 })
 
@@ -16,8 +16,8 @@ router.delete('/:id', async (req, res) => {
     await User.destroy({ where: { id: req.params.id } })
 
     res.json('deleted')
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    next(e);
   }
 })
 

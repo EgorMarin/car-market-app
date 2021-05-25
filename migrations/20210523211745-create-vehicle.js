@@ -9,15 +9,6 @@ module.exports = {
         autoIncrement: true,
         allowNull: false,
       },
-      brandId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'Brands',
-          key: 'id',
-        },
-        onDelete: 'CASCADE',
-        onUpdate: 'no action',
-      },
       modelId: {
         type: Sequelize.INTEGER,
         references: {

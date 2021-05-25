@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
 
   Vehicle.associate = (models) => {
     Vehicle.belongsTo(models.User, { foreignKey: 'userId' })
-    Vehicle.belongsTo(models.Brand, { foreignKey: 'brandId' })
     Vehicle.belongsTo(models.Model, { foreignKey: 'modelId' })
   }
 
