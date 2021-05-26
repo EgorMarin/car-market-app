@@ -6,4 +6,12 @@ module.exports = {
   REFRESH_TOKEN_EXPIRATION_TIME: '7d',
   RESET_PASSWORD_TOKEN_EXPIRATION_TIME: '1h',
   FRONT_APP_URL: 'http://localhost:3000',
+  VEHICLE_TYPE: {
+    AUTO: 'AUTO',
+    MOTO: 'MOTO', 
+    TRUCK: 'TRUCK', 
+    BUS: 'BUS', 
+    AIR: 'AIR', 
+    WATER: 'WATER'
+  }
 }

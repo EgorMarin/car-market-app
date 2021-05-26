@@ -1,7 +1,5 @@
 const yup = require('yup');
-const crypto = require("crypto-js");
 const { User } = require('../../models')
-const { SECRET_PASSWORD_KEY } = require("../../config/constanst");
 
 module.exports = (req) => {
   return yup.object().shape({

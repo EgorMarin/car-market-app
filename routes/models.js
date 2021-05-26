@@ -1,8 +1,8 @@
 const router = require('express').Router()
 
-const { Brand, Model, Vehicle } = require('../models')
+const { Model, Vehicle } = require('../models')
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -17,11 +17,11 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   const { name, brandId } = req.body;
 
   try {
-    const model = await Model.create({ name, brandId });
+    const [model] = await Model.findOrCreate({ where: { name, brandId } });
 
     res.json(model)
   } catch (e) {

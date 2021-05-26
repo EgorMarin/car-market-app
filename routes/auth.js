@@ -15,12 +15,11 @@ const { SECRET_PASSWORD_KEY } = require('../config/constanst');
 const sendMail = require('../helpers/sendMail')
 const getBaseUrl = require('../helpers/domain')
 
-router.post('/register', validate(registerSchema), async (req, res) => {
+router.post('/register', validate(registerSchema), async (req, res, next) => {
   const { email, fullName, password, phone } = req.body
   
   try {
     const encryptedPassword = crypto.AES.encrypt(password, `${SECRET_PASSWORD_KEY}`).toString()
-
     const user = await User.create({ email, fullName, phone, password: encryptedPassword })
     const tokens = await createAndSaveAuthTokens(user, req)
 
@@ -30,12 +29,11 @@ router.post('/register', validate(registerSchema), async (req, res) => {
   }
 });
 
-router.post('/login', validate(loginSchema), async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res, next) => {
   const { email, password } = req.body
+  const user = req.user
 
   try {
-    const user = await User.findOne({ where: { email } });
-
     const decryptedPassword = crypto
     .AES
     .decrypt(user.password, SECRET_PASSWORD_KEY)
@@ -55,7 +53,7 @@ router.post('/login', validate(loginSchema), async (req, res) => {
   }
 });
 
-router.post('/refresh-token', validate(refreshTokenSchema), async (req, res) => {
+router.post('/refresh-token', validate(refreshTokenSchema), async (req, res, next) => {
   try {
     const tokens = await createAndSaveAuthTokens(req.user, req)
     res.json(tokens)
@@ -64,7 +62,7 @@ router.post('/refresh-token', validate(refreshTokenSchema), async (req, res) => 
   }
 });
 
-router.post('/forgot-password', validate(forgotPasswordSchema), async (req, res) => {
+router.post('/forgot-password', validate(forgotPasswordSchema), async (req, res, next) => {
   try {
     const resetToken = await createResetPasswordToken(req.user)
 
@@ -80,7 +78,7 @@ router.post('/forgot-password', validate(forgotPasswordSchema), async (req, res)
   }
 })
 
-router.post('/reset-password', validate(resetPasswordSchema), async (req, res) => {
+router.post('/reset-password', validate(resetPasswordSchema), async (req, res, next) => {
   try {
     const { user, body: { password }} = req
 

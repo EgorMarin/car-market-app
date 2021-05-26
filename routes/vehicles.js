@@ -3,8 +3,10 @@ const router = require('express').Router();
 
 const { Vehicle, User, Model, Brand } = require('../models')
 const { checkIfOwner } = require('../middlewares/vehicles')
+const validate = require('../helpers/validationSchemaHelper')
+const { createVehicle } = require('../validations/vehicles')
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -28,14 +30,12 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', passport.authenticate('jwt'), async (req, res) => {
-  const { modelId } = req.body
+router.post('/', [passport.authenticate('jwt'), validate(createVehicle)], async (req, res, next) => {
+  const { modelId, type, price, age } = req.body
   const userId = req.user.id
 
-  console.log('req.user', userId, 5565446);
-
   try {
-    const vehicle = await Vehicle.create({ userId, modelId })
+    const vehicle = await Vehicle.create({ userId, modelId, type, price, age })
 
     res.json(vehicle)
   } catch (e) {
@@ -43,7 +43,7 @@ router.post('/', passport.authenticate('jwt'), async (req, res) => {
   }
 })
 
-router.patch('/', [passport.authenticate('jwt'), checkIfOwner], async (req, res) => {
+router.patch('/', [passport.authenticate('jwt'), checkIfOwner], async (req, res, next) => {
   const { modelId, name } = req.body
   const userId = req.user.id
 
@@ -59,7 +59,7 @@ router.patch('/', [passport.authenticate('jwt'), checkIfOwner], async (req, res)
   }
 })
 
-router.delete('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, res) => {
+router.delete('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, res, next) => {
   const { id } = req.params;
   
   try {

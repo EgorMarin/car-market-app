@@ -1,11 +1,15 @@
-const router = require('express').Router()
-const { User } = require('../models')
+const passport = require('passport');
+const router = require('express').Router();
 
-router.get('/:id', async (req, res) => {
+const { User, Vehicle } = require('../models');
+
+router.get('/vehicles', passport.authenticate('jwt'), async (req, res) => {
+  const userId = req.user.id
+
   try {
-    const user = await User.findByPk(req.params.id)
+    const vehicles = await Vehicle.findAll({ where: { userId } })
 
-    res.json(user)
+    res.json(vehicles)
   } catch (e) {
     next(e);
   }
