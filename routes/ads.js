@@ -1,16 +1,16 @@
 const passport = require('passport');
 const router = require('express').Router();
 
-const { Vehicle, User, Model, Brand } = require('../models')
-const { checkIfOwner } = require('../middlewares/vehicles')
+const { Ad, User, Model, Brand } = require('../models')
+const { checkIfOwner } = require('../middlewares/ads')
 const validate = require('../helpers/validationSchemaHelper')
-const { createVehicle } = require('../validations/vehicles')
+const { createAd } = require('../validations/ads')
 
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const vehicle = await Vehicle.findOne({
+    const ad = await Ad.findOne({
       where: { id },
       include: [
         {
@@ -24,20 +24,22 @@ router.get('/:id', async (req, res, next) => {
       ]
     })
 
-    res.json(vehicle)
+    res.json(ad)
   } catch (e) {
     next(e);
   }
 })
 
-router.post('/', [passport.authenticate('jwt'), validate(createVehicle)], async (req, res, next) => {
-  const { modelId, type, price, age } = req.body
+router.post('/', [passport.authenticate('jwt'), validate(createAd)], async (req, res, next) => {
+  const { modelId, vehicleType, price, year, vin, description } = req.body
   const userId = req.user.id
 
   try {
-    const vehicle = await Vehicle.create({ userId, modelId, type, price, age })
+    const ad = await Ad.create({ 
+      userId, modelId, vehicleType, price, year, vin, description 
+    })
 
-    res.json(vehicle)
+    res.json(ad)
   } catch (e) {
     next(e);
   }
@@ -48,12 +50,12 @@ router.patch('/', [passport.authenticate('jwt'), checkIfOwner], async (req, res,
   const userId = req.user.id
 
   try {
-    const vehicle = await Vehicle.findOne({ userId, modelId })
+    const ad = await Ad.findOne({ userId, modelId })
 
-    // vehicle.name = name
-    // await vehicle.save()
+    // ad.name = name
+    // await ad.save()
 
-    res.json(vehicle)
+    res.json(ad)
   } catch (e) {
     next(e);
   }
@@ -63,7 +65,7 @@ router.delete('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, 
   const { id } = req.params;
   
   try {
-    await Vehicle.destroy({ where: { id }})
+    await Ad.destroy({ where: { id }})
 
     res.json('deleted')
   } catch (e) {

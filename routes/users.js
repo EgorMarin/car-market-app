@@ -1,15 +1,15 @@
 const passport = require('passport');
 const router = require('express').Router();
 
-const { User, Vehicle } = require('../models');
+const { User, Ad } = require('../models');
 
-router.get('/vehicles', passport.authenticate('jwt'), async (req, res) => {
+router.get('/ads', passport.authenticate('jwt'), async (req, res) => {
   const userId = req.user.id
 
   try {
-    const vehicles = await Vehicle.findAll({ where: { userId } })
+    const ads = await Ad.findAll({ where: { userId } })
 
-    res.json(vehicles)
+    res.json(ads)
   } catch (e) {
     next(e);
   }

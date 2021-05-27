@@ -1,6 +1,6 @@
 const router = require('express').Router()
 
-const { Model, Vehicle } = require('../models')
+const { Model, Ad } = require('../models')
 
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
@@ -8,7 +8,7 @@ router.get('/:id', async (req, res, next) => {
   try {
     const model = await Model.findOne({
       where: { id },
-      include: Vehicle,
+      include: Ad,
     });
 
     res.json(model)

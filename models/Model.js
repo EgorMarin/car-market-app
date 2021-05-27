@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Model.associate = (models) => {
     Model.belongsTo(models.Brand, { foreignKey: 'brandId' })
-    Model.hasMany(models.Vehicle, { foreignKey: "modelId" })
+    Model.hasMany(models.Ad, { foreignKey: "modelId" })
   }
 
   return Model
