@@ -1,3 +1,7 @@
+const crypto = require("crypto-js");
+
+const { SECRET_PASSWORD_KEY } = require("../config/constanst");
+
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define("User", {
     email: {
@@ -16,6 +20,12 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
     },
     resetPasswordToken: DataTypes.STRING,
+  }, {
+    hooks: {
+      beforeCreate(user) {
+        user.password = crypto.AES.encrypt(user.password, `${SECRET_PASSWORD_KEY}`).toString()
+      }
+    }
   })
 
   User.associate = (models) => {

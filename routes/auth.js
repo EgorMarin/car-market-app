@@ -17,10 +17,9 @@ const getBaseUrl = require('../helpers/domain')
 
 router.post('/register', validate(registerSchema), async (req, res, next) => {
   const { email, fullName, password, phone } = req.body
-  
+
   try {
-    const encryptedPassword = crypto.AES.encrypt(password, `${SECRET_PASSWORD_KEY}`).toString()
-    const user = await User.create({ email, fullName, phone, password: encryptedPassword })
+    const user = await User.create({ email, fullName, phone, password })
     const tokens = await createAndSaveAuthTokens(user, req)
 
     res.json(tokens)

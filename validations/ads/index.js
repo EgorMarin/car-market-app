@@ -1,5 +1,5 @@
-const createVehicle = require('./createVehicle')
+const createAd = require('./createAd')
 
 module.exports = {
-  createVehicle,
+  createAd,
 }

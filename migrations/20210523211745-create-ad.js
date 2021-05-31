@@ -42,7 +42,7 @@ module.exports = {
               VEHICLE_TYPE.WATER, 
               VEHICLE_TYPE.AIR
             ]],
-            msg: "Type is invalid!"
+            msg: "Type is invalid!",
           },
         },
       },

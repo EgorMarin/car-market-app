@@ -1,10 +1,11 @@
 const passport = require('passport');
 const router = require('express').Router();
+const { pick } = require('lodash')
 
 const { Ad, User, Model, Brand } = require('../models')
 const { checkIfOwner } = require('../middlewares/ads')
 const validate = require('../helpers/validationSchemaHelper')
-const { createAd } = require('../validations/ads')
+const { createAd } = require('../validations/ads');
 
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
@@ -15,7 +16,7 @@ router.get('/:id', async (req, res, next) => {
       include: [
         {
           model: User,
-          as: 'owner',
+          as: 'owner'
         },
         {
           model: Model,
@@ -45,15 +46,19 @@ router.post('/', [passport.authenticate('jwt'), validate(createAd)], async (req,
   }
 })
 
-router.patch('/', [passport.authenticate('jwt'), checkIfOwner], async (req, res, next) => {
-  const { modelId, name } = req.body
-  const userId = req.user.id
+router.patch('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, res, next) => {
+  const { id } = req.params;
 
   try {
-    const ad = await Ad.findOne({ userId, modelId })
+    const ad = await Ad.findOne({ where: { id } })
 
-    // ad.name = name
-    // await ad.save()
+    const fields = pick(req.body, ['year', 'name'])
+
+    Object.keys(fields).forEach(key => {
+      return ad[key] = fields[key]
+    })
+
+    await ad.save()
 
     res.json(ad)
   } catch (e) {

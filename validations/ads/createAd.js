@@ -12,18 +12,14 @@ module.exports = yup.object().shape({
     .test({
       message: 'error.type-not-valid',
       test: (type) => {
-        if (![
+        return [
           VEHICLE_TYPE.AUTO, 
           VEHICLE_TYPE.MOTO, 
           VEHICLE_TYPE.BUS, 
           VEHICLE_TYPE.TRUCK, 
           VEHICLE_TYPE.WATER, 
           VEHICLE_TYPE.AIR
-        ].includes(type)) {
-          return false
-        }
-
-        return true
+        ].includes(type)
       },
     }),
   price: yup

@@ -1,15 +1,12 @@
-const passport = require('passport');
 const router = require('express').Router();
 
-const { User, Ad } = require('../models');
+const { User } = require('../models');
 
-router.get('/ads', passport.authenticate('jwt'), async (req, res) => {
-  const userId = req.user.id
-
+router.get('/', async (req, res) => {
   try {
-    const ads = await Ad.findAll({ where: { userId } })
+    const users = await User.findAll()
 
-    res.json(ads)
+    res.json(users)
   } catch (e) {
     next(e);
   }
