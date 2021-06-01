@@ -6,6 +6,7 @@ const { Ad, User, Model, Brand } = require('../models')
 const { checkIfOwner } = require('../middlewares/ads')
 const validate = require('../helpers/validationSchemaHelper')
 const { createAd } = require('../validations/ads');
+const { imageUploader }  = require('../config/multer')
 
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
@@ -61,6 +62,17 @@ router.patch('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, r
     await ad.save()
 
     res.json(ad)
+  } catch (e) {
+    next(e);
+  }
+})
+
+router.post('/photos', imageUploader.single('image') , async (req, res, next) => {
+  console.log(req.file);
+  const api = 'http://localhost:3001'
+  try {
+
+    res.json(`${api}/images/${req.file.filename}`)
   } catch (e) {
     next(e);
   }
