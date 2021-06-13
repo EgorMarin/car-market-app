@@ -12,11 +12,15 @@ const { checkIfOwner } = require('../middlewares/ads')
 const validate = require('../helpers/validationSchemaHelper')
 const { createAd } = require('../validations/ads')
 const { imageUploader, videoUploader } = require('../config/multer')
-const { AWS_BUCKET_NAME, AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY } = require('../config/constanst')
+const { AWS_BUCKET_NAME, AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_PART_SIZE } = require('../config/constanst')
+const { getExt } = require('../helpers/api')
 
 const s3 = new AWS.S3({
   accessKeyId: AWS_ACCESS_KEY,
   secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  httpOptions : {
+    timeout: 300000 // 5 minutes delay
+  },
 });
 
 router.get('/:id', async (req, res, next) => {
@@ -97,13 +101,9 @@ router.post('/photos', imageUploader.single('image') , async (req, res, next) =>
   try {
     const { buffer, mimetype, originalname } = req.file
 
-    const ext = originalname.substr(
-      originalname.lastIndexOf('.') + 1
-    )
-
     const { writeStream, promise } = uploadStream({ 
       Bucket: AWS_BUCKET_NAME, 
-      Key: `${uuid()}.${ext}`,
+      Key: `${uuid()}.${getExt(originalname)}`,
       ContentType: mimetype,
       ACL: 'public-read',
     })
@@ -126,91 +126,28 @@ router.post('/photos', imageUploader.single('image') , async (req, res, next) =>
   }
 })
 
-// multipart upload
-let partNum = 0;
-const partSize = 1024 * 1024 * 5;
-const videoFileKey = `${uuid()}-video`
-const multiPartParams = {
-  Bucket: AWS_BUCKET_NAME, 
-  Key: videoFileKey,
-  ACL: 'public-read',
-};
-let MultipartUpload = {
-  Parts: []
-};
-
-const completeMultipartUpload = async (doneParams) => {
-  const promise = await s3.completeMultipartUpload(doneParams).promise()
-  console.log('End uploading', promise);
-}
-
-const uploadPart = (UploadId, partParams, numPartsLeft, tryNum) => {
-  let tryNumber = tryNum || 1
-
-  s3.uploadPart(partParams, (err) => {
-    if (err) {
-      if (tryNum < 3) {
-        console.log('Retrying upload of part: #', partParams.PartNumber)
-        uploadPart(UploadId, partParams, numPartsLeft, tryNumber + 1);
-      }
-
-      return console.log('Failed uploading part: #', partParams.PartNumber);
-    }
-
-    MultipartUpload.Parts[partNum - 1] = {
-      PartNumber: partNum
-    };
-
-    if (--numPartsLeft > 0) return; // complete only when all parts uploaded
-    
-    const doneParams = {
-      Bucket: AWS_BUCKET_NAME,
-      Key: videoFileKey,
-      MultipartUpload,
-      UploadId,
-    };
-
-    completeMultipartUpload(doneParams);
-  })
-}
-
 router.post('/videos', videoUploader.single('video') , async (req, res, next) => {
   const { buffer, mimetype, originalname } = req.file
 
-  console.log('req.file', req.file);
+  const parts = Math.ceil(buffer.length / VIDEO_PART_SIZE);
 
-  let numPartsLeft = Math.ceil(buffer.length / partSize);
+  const params = {
+    Bucket: AWS_BUCKET_NAME, 
+    Key: `${uuid()}-video.${getExt(originalname)}`,
+    Body: streamifier.createReadStream(buffer),
+    ContentType: mimetype,
+    ACL: 'public-read',
+  }
+
+  const options = {
+    partSize: VIDEO_PART_SIZE,
+    queueSize: parts,
+  }
 
   try {
-    const { UploadId } = await s3.createMultipartUpload(multiPartParams).promise()
+    const data = await s3.upload(params, options).promise();
 
-    console.log("Got upload ID", UploadId);
-
-    for (let rangeStart = 0; rangeStart < buffer.length; rangeStart += partSize) {
-      partNum++;
-
-      const end = Math.min(rangeStart + partSize, buffer.length)
-
-      const partParams = {
-        Body: buffer.slice(rangeStart, end),
-        Bucket: AWS_BUCKET_NAME,
-        Key: videoFileKey,
-        PartNumber: String(partNum),
-        UploadId,
-      };
-
-      // Send a single part
-      console.log(
-        'Uploading part: #', partParams.PartNumber,
-        ', Range start:', rangeStart,
-        ', Num parts left:', numPartsLeft,
-      );
-
-      uploadPart(UploadId, partParams, numPartsLeft);
-    }
-
-
-    res.json('ok')
+    res.json(data)
   } catch (e) {
     next(e);
   }

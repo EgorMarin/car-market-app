@@ -18,4 +18,5 @@ module.exports = {
   AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+  VIDEO_PART_SIZE: 1024 * 1024 * 5, // 5Mb
 }
