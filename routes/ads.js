@@ -5,6 +5,7 @@ const stream = require('stream')
 const streamifier = require('streamifier')
 const AWS = require('aws-sdk')
 const sharp = require('sharp')
+const archiver = require('archiver')
 const { v4: uuid } = require('uuid')
 
 const { Ad, User, Model, Brand } = require('../models')
@@ -82,27 +83,23 @@ router.patch('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, r
   }
 })
 
-const uploadStream = ({ Bucket, Key, ContentType, ACL }) => {
+const uploadStream = (params, options = {}) => {
   const pass = new stream.PassThrough();
+
+  console.log( params, options);
 
   return {
     writeStream: pass,
-    promise: s3.upload({ 
-      Bucket,
-      Key,
-      ContentType,
-      Body: pass,
-      ACL,
-    }).promise()
+    promise: s3.upload({ ...params, Body: pass }, options).promise()
   };
 }
 
 router.post('/photos', imageUploader.single('image') , async (req, res, next) => {
   try {
-    const { buffer, mimetype, originalname } = req.file
+    const { buffer, mimetype, originalname } = req.file;
 
     const { writeStream, promise } = uploadStream({ 
-      Bucket: AWS_BUCKET_NAME, 
+      Bucket: AWS_BUCKET_NAME,
       Key: `${uuid()}.${getExt(originalname)}`,
       ContentType: mimetype,
       ACL: 'public-read',
@@ -127,25 +124,60 @@ router.post('/photos', imageUploader.single('image') , async (req, res, next) =>
 })
 
 router.post('/videos', videoUploader.single('video') , async (req, res, next) => {
-  const { buffer, mimetype, originalname } = req.file
+  const { buffer, mimetype, originalname } = req.file;
 
   const parts = Math.ceil(buffer.length / VIDEO_PART_SIZE);
 
-  const params = {
-    Bucket: AWS_BUCKET_NAME, 
-    Key: `${uuid()}-video.${getExt(originalname)}`,
-    Body: streamifier.createReadStream(buffer),
-    ContentType: mimetype,
-    ACL: 'public-read',
-  }
+  const readStream = streamifier.createReadStream(buffer)
 
-  const options = {
-    partSize: VIDEO_PART_SIZE,
-    queueSize: parts,
-  }
+  const { writeStream, promise } = uploadStream(
+    { 
+      Bucket: AWS_BUCKET_NAME,
+      Key: `${uuid()}-video.zip`,
+      ContentType: 'application/zip',
+      ACL: 'public-read',
+    }, 
+    {
+      partSize: VIDEO_PART_SIZE,
+      queueSize: parts,
+    }
+  )
+
+  const archive = archiver('zip', {
+    zlib: { level: 9 },
+  });
+
+  archive.on('error', (err) => {
+    throw err;
+  });
+
+  archive.pipe(writeStream)
+
+  archive
+    .append(readStream, { 
+      name: `${uuid()}-video.${getExt(originalname)}` 
+    })
+    .finalize()
+
+  const data = await promise
+
+  // upload video without archiving
+
+  // const params = {
+  //   Bucket: AWS_BUCKET_NAME,
+  //   Key: `${uuid()}-video.${getExt(originalname)}`,
+  //   Body: streamifier.createReadStream(buffer),
+  //   ContentType: mimetype,
+  //   ACL: 'public-read',
+  // }
+
+  // const options = {
+  //   partSize: VIDEO_PART_SIZE,
+  //   queueSize: parts,
+  // }
 
   try {
-    const data = await s3.upload(params, options).promise();
+    // const data = await s3.upload(params, options).promise();
 
     res.json(data)
   } catch (e) {
