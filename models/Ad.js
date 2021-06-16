@@ -1,8 +1,17 @@
+const { VEHICLE_TYPE } = require("../config/constanst")
+
 module.exports = (sequelize, DataTypes) => {
   const Ad = sequelize.define('Ad', {
     vehicleType: {
-      type: DataTypes.ENUM('AUTO', 'MOTO', 'TRUCK', 'BUS', 'AIR', 'WATER'),
-      defaultValue: 'AUTO',
+      type: DataTypes.ENUM(
+        VEHICLE_TYPE.AUTO, 
+        VEHICLE_TYPE.MOTO, 
+        VEHICLE_TYPE.BUS, 
+        VEHICLE_TYPE.TRUCK, 
+        VEHICLE_TYPE.WATER, 
+        VEHICLE_TYPE.AIR
+      ),
+      defaultValue: VEHICLE_TYPE.AUTO,
     },
     price: {
       type: DataTypes.INTEGER,
@@ -12,8 +21,9 @@ module.exports = (sequelize, DataTypes) => {
     vin: {
       type: DataTypes.STRING,
       validate: {
-        min: 17,
-        max: 17,
+        len: {
+          args: [17],
+        }
       }
     },
     description: {
@@ -28,6 +38,7 @@ module.exports = (sequelize, DataTypes) => {
   Ad.associate = (models) => {
     Ad.belongsTo(models.User, { foreignKey: 'userId', as: 'owner' })
     Ad.belongsTo(models.Model, { foreignKey: 'modelId' })
+    Ad.hasMany(models.AdsView, { foreignKey: 'adsId' })
   }
 
   return Ad

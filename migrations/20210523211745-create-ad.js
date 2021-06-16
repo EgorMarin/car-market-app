@@ -56,8 +56,10 @@ module.exports = {
       vin: {
         type: Sequelize.STRING,
         validate: {
-          min: 17,
-          max: 17,
+          len: {
+            args: [17],
+            msg: 'Vin code must be 17 numbers'
+          }
         },
       },
       description: {

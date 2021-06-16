@@ -29,8 +29,8 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
 });
 
 router.post('/login', validate(loginSchema), async (req, res, next) => {
-  const { email, password } = req.body
-  const user = req.user
+  const { password } = req.body;
+  const { user } = req;
 
   try {
     const decryptedPassword = crypto
@@ -45,7 +45,7 @@ router.post('/login', validate(loginSchema), async (req, res, next) => {
       });
     }
 
-    const tokens = await createAndSaveAuthTokens(req.user, req)
+    const tokens = await createAndSaveAuthTokens(user, req)
     res.json(tokens)
   } catch (e) {
     next(e);

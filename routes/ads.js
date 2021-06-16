@@ -8,7 +8,7 @@ const sharp = require('sharp')
 const archiver = require('archiver')
 const { v4: uuid } = require('uuid')
 
-const { Ad, User, Model, Brand } = require('../models')
+const { Ad, AdsView, User, Model, Brand } = require('../models')
 const { checkIfOwner } = require('../middlewares/ads')
 const validate = require('../helpers/validationSchemaHelper')
 const { createAd } = require('../validations/ads')
@@ -23,6 +23,16 @@ const s3 = new AWS.S3({
     timeout: 300000 // 5 minutes delay
   },
 });
+
+router.get('/', async (req, res, next) => {
+  try {
+    const ads = await Ad.findAll()
+
+    res.json(ads)
+  } catch (e) {
+    next(e);
+  }
+})
 
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
@@ -42,6 +52,10 @@ router.get('/:id', async (req, res, next) => {
       ]
     })
 
+    await AdsView.create({
+      adsId: id,
+    })
+
     res.json(ad)
   } catch (e) {
     next(e);
@@ -54,7 +68,7 @@ router.post('/', [passport.authenticate('jwt'), validate(createAd)], async (req,
 
   try {
     const ad = await Ad.create({ 
-      userId, modelId, vehicleType, price, year, vin, description 
+      userId, modelId, vehicleType, price, year, vin, description
     })
 
     res.json(ad)
@@ -85,8 +99,6 @@ router.patch('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, r
 
 const uploadStream = (params, options = {}) => {
   const pass = new stream.PassThrough();
-
-  console.log( params, options);
 
   return {
     writeStream: pass,
@@ -129,7 +141,6 @@ router.post('/videos', videoUploader.single('video') , async (req, res, next) =>
   const parts = Math.ceil(buffer.length / VIDEO_PART_SIZE);
 
   const readStream = streamifier.createReadStream(buffer)
-
   const { writeStream, promise } = uploadStream(
     { 
       Bucket: AWS_BUCKET_NAME,
