@@ -52,6 +52,10 @@ router.get('/:id', async (req, res, next) => {
       ]
     })
 
+    if (!ad) {
+      return res.status(401).json('Ad doesnt exist!')
+    }
+
     await AdsView.create({
       adsId: id,
     })
