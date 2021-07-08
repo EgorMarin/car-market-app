@@ -2,12 +2,12 @@ const router = require('express').Router()
 const { Op } = require('sequelize')
 const moment = require('moment')
 // const sequelize = require('../config/db')
-const sequelize = require('sequelize')
+// const sequelize = require('sequelize')
 
 const { Ad, AdsView, Model, Brand } = require('../models')
 
 router.get('/', async (req, res, next) => {
-  const { startDate, endDate } = req.body;
+  // const { startDate, endDate } = req.body;  
 
   try {
     // get count of views of brands

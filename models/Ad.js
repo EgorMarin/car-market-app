@@ -36,9 +36,10 @@ module.exports = (sequelize, DataTypes) => {
   })
 
   Ad.associate = (models) => {
+    Ad.hasMany(models.AdsView, { foreignKey: 'adsId' })
     Ad.belongsTo(models.User, { foreignKey: 'userId', as: 'owner' })
     Ad.belongsTo(models.Model, { foreignKey: 'modelId' })
-    Ad.hasMany(models.AdsView, { foreignKey: 'adsId' })
+    Ad.belongsToMany(models.Tag, { through: 'AdTags', foreignKey: 'adsId' })
   }
 
   return Ad

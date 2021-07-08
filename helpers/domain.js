@@ -10,7 +10,7 @@ const getBaseUrl = (req) => {
   if (origin) {
     return origin.replace(/^\/|\/$/g, '');
   }
-  console.log(FRONT_APP_URL);
+
   return FRONT_APP_URL;
 };
 

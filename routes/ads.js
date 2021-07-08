@@ -1,28 +1,18 @@
 const passport = require('passport')
 const router = require('express').Router()
 const { pick } = require('lodash')
-const stream = require('stream')
 const streamifier = require('streamifier')
-const AWS = require('aws-sdk')
 const sharp = require('sharp')
 const archiver = require('archiver')
 const { v4: uuid } = require('uuid')
 
-const { Ad, AdsView, User, Model, Brand } = require('../models')
+const { Ad, AdsView, AdTag, Tag, User, Model, Brand } = require('../models')
 const { checkIfOwner } = require('../middlewares/ads')
-const validate = require('../helpers/validationSchemaHelper')
 const { createAd } = require('../validations/ads')
 const { imageUploader, videoUploader } = require('../config/multer')
-const { AWS_BUCKET_NAME, AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY, VIDEO_PART_SIZE } = require('../config/constanst')
-const { getExt } = require('../helpers/api')
-
-const s3 = new AWS.S3({
-  accessKeyId: AWS_ACCESS_KEY,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  httpOptions : {
-    timeout: 300000 // 5 minutes delay
-  },
-});
+const { AWS_BUCKET_NAME, VIDEO_PART_SIZE } = require('../config/constanst')
+const { getExt, uploadStream } = require('../helpers/api')
+const validate = require('../helpers/validationSchemaHelper')
 
 router.get('/', async (req, res, next) => {
   try {
@@ -56,9 +46,9 @@ router.get('/:id', async (req, res, next) => {
       return res.status(401).json('Ad doesnt exist!')
     }
 
-    await AdsView.create({
-      adsId: id,
-    })
+    // await AdsView.create({
+    //   adsId: id,
+    // })
 
     res.json(ad)
   } catch (e) {
@@ -67,12 +57,12 @@ router.get('/:id', async (req, res, next) => {
 })
 
 router.post('/', [passport.authenticate('jwt'), validate(createAd)], async (req, res, next) => {
-  const { modelId, vehicleType, price, year, vin, description } = req.body
+  const { modelId, vehicleType, price, year, vin, description, tagId } = req.body
   const userId = req.user.id
 
   try {
     const ad = await Ad.create({ 
-      userId, modelId, vehicleType, price, year, vin, description
+      userId, modelId, vehicleType, price, year, vin, description, tagId
     })
 
     res.json(ad)
@@ -100,15 +90,6 @@ router.patch('/:id', [passport.authenticate('jwt'), checkIfOwner], async (req, r
     next(e);
   }
 })
-
-const uploadStream = (params, options = {}) => {
-  const pass = new stream.PassThrough();
-
-  return {
-    writeStream: pass,
-    promise: s3.upload({ ...params, Body: pass }, options).promise()
-  };
-}
 
 router.post('/photos', imageUploader.single('image') , async (req, res, next) => {
   try {
@@ -139,7 +120,7 @@ router.post('/photos', imageUploader.single('image') , async (req, res, next) =>
   }
 })
 
-router.post('/videos', videoUploader.single('video') , async (req, res, next) => {
+router.post('/videos', videoUploader.single('video'), async (req, res, next) => {
   const { buffer, mimetype, originalname } = req.file;
 
   const parts = Math.ceil(buffer.length / VIDEO_PART_SIZE);
@@ -197,6 +178,18 @@ router.post('/videos', videoUploader.single('video') , async (req, res, next) =>
     res.json(data)
   } catch (e) {
     next(e);
+  }
+})
+
+router.post('/tags', async (req, res, next) => {
+  const { tagId, adsId } = req.body;
+
+  try {
+    const adTag = await AdTag.create({ tagId, adsId })
+
+    res.json(adTag)
+  } catch (e) {
+    next(e)
   }
 })
 

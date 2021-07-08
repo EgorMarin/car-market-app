@@ -1,9 +1,8 @@
 module.exports = (schema) => async (req, res, next) => {
-  const { body } = req;
   try {
     if (schema instanceof Function) {
       const schemaObj = await schema(req);
-      await schemaObj.validate(body);
+      await schemaObj.validate(req.body);
     } else {
       await schema.validate(req.body);
     }
