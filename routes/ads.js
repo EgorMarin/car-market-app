@@ -6,7 +6,7 @@ const sharp = require('sharp')
 const archiver = require('archiver')
 const { v4: uuid } = require('uuid')
 
-const { Ad, AdsView, AdTag, Tag, User, Model, Brand } = require('../models')
+const { Ad, AdTag, User, Model, Brand } = require('../models')
 const { checkIfOwner } = require('../middlewares/ads')
 const { createAd } = require('../validations/ads')
 const { imageUploader, videoUploader } = require('../config/multer')
@@ -57,13 +57,18 @@ router.get('/:id', async (req, res, next) => {
 })
 
 router.post('/', [passport.authenticate('jwt'), validate(createAd)], async (req, res, next) => {
-  const { modelId, vehicleType, price, year, vin, description, tagId } = req.body
-  const userId = req.user.id
+  const userId = req.user.id;
+  const { modelId, vehicleType, price, year, vin, description, tags } = req.body;
 
   try {
     const ad = await Ad.create({ 
-      userId, modelId, vehicleType, price, year, vin, description, tagId
+      userId, modelId, vehicleType, price, year, vin, description
     })
+
+    // adding tags
+    await AdTag.bulkCreate(tags.map(tagId => ({
+      tagId, adsId: ad.id
+    })))
 
     res.json(ad)
   } catch (e) {
@@ -178,18 +183,6 @@ router.post('/videos', videoUploader.single('video'), async (req, res, next) => 
     res.json(data)
   } catch (e) {
     next(e);
-  }
-})
-
-router.post('/tags', async (req, res, next) => {
-  const { tagId, adsId } = req.body;
-
-  try {
-    const adTag = await AdTag.create({ tagId, adsId })
-
-    res.json(adTag)
-  } catch (e) {
-    next(e)
   }
 })
 

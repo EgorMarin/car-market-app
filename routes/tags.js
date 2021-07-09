@@ -1,34 +1,16 @@
+const { Op } = require("sequelize");
 const router = require('express').Router();
+const sequelize = require('../config/db')
 
 const { User, AdTag, Ad, Tag } = require('../models');
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const tags = await Tag.findAll()
 
     res.json(tags)
   } catch (e) {
     next(e);
-  }
-})
-
-router.get('/:id', async (req, res, next) => {
-  try {
-    const adTags = await Ad.findAll({
-      include: [
-        { 
-          model: Tag, 
-          required: true, 
-          through: {
-            attributes: []
-          } 
-        },
-      ],
-    })
-
-    res.json(adTags)
-  } catch (e) {
-    next(e)
   }
 })
 
