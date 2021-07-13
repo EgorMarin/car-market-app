@@ -2,7 +2,6 @@ const router = require('express').Router();
 const { Op, literal } = require("sequelize");
 
 const sequelize = require('../config/db')
-
 const { Ad, AdTag, Tag } = require('../models');
 
 router.get('/', async (req, res, next) => {
