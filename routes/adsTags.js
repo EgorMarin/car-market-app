@@ -9,151 +9,83 @@ router.get('/', async (req, res, next) => {
   const { tags } = req.body;
 
   try {
-    // receive all ads by selected tags
-    // переделать
+    // receive all ads by selected tags*
     // const ads = await Ad.findAll({
+    //   where: {
+    //     id: {
+    //       [Op.in]: [
+    //         sequelize.literal(`
+    //           SELECT "AdTags"."adsId"
+    //           FROM "AdTags"
+    //           WHERE "AdTags"."tagId" IN (${tags})
+    //           GROUP BY "AdTags"."adsId"
+    //           HAVING COUNT("AdTags"."tagId") = ${tags.length}
+    //         `)
+    //       ]
+    //     }
+    //   },
     //   include: {
     //     model: Tag,
-    //     attributes: {
-    //       include: [
-    //         [
-    //           sequelize.literal(
-    //             `COUNT("Tags"."id")`
-    //           ),
-    //           'tagsCount',
-    //         ],
-    //       ],
-    //     },
-    //     where: {
-    //       [Op.or]: [
-    //         ...tags
-    //       ],
-    //     },
-    //   },
-    //   group: ['"Ad"."id"'],
-    //   having: sequelize.literal(`COUNT('"Tags->AdTags"."tagId"') = ${tags.length}`),
+    //     through: {
+    //       attributes: []
+    //     }
+    //   }
     // })
-
-    // receive all ads by selected tags
+    // *another way
     // const ads = await sequelize.query(`
     //     SELECT 
-    //       "Ad"."id" AS "adsId",
-    //       COUNT("AdTags"."tagId") AS "tagsCount"
-    //     FROM "Ads" AS "Ad" 
+    //       "Ads"."id" AS "adsId"
+    //     FROM "Ads"
     //     INNER JOIN (
     //       "AdTags"
     //       INNER JOIN "Tags"
     //       ON "Tags"."id" = "AdTags"."tagId"
     //       )
-    //     ON "Ad"."id" = "AdTags"."adsId" 
-    //     WHERE ( "Tags"."id" = 1 OR "Tags"."id" = 2 )
-    //     GROUP BY "Ad"."id"
+    //     ON "Ads"."id" = "AdTags"."adsId" 
+    //     WHERE "Tags"."id" IN (:tags)
+    //     GROUP BY "Ads"."id"
     //     HAVING COUNT("AdTags"."tagId") = :tagsLength
     //   `,
     //   {
     //     replacements: {
+    //       tags,
     //       tagsLength: tags.length
     //     }
     //   }
     // );
 
-    // receive posts with similarly its tags which from provided post
-    const ads = await Ad.findAll({
-      where: { 
-        id: {
-          [Op.ne]: req.body.adsId
-        },
-      },
-      include: [
-        {
-          model: Tag,
-          // where: {
-          //   id: {
-          //     [Op.in]: [
-          //     sequelize.literal(` 
-          //       SELECT
-          //         "Tags"."id" as "tagId"
-          //       FROM "Ads" AS "Ad" 
-          //       INNER JOIN (
-          //         "AdTags"
-          //         INNER JOIN "Tags"
-          //         ON "Tags"."id" = "AdTags"."tagId"
-          //         )
-          //       ON "Ad"."id" = "AdTags"."adsId"
-          //       WHERE "Ad"."id" = ${req.body.adsId}
-          //     `)
-          //     ]
-          //   }
-          // },
-          through: {
-            required: true,
-            where: {
-              tagId: {
-                [Op.in]: [
-                  sequelize.literal(` 
-                    SELECT
-                      "Tags"."id" as "tagId"
-                    FROM "Ads" AS "Ad" 
-                    INNER JOIN (
-                      "AdTags"
-                      INNER JOIN "Tags"
-                      ON "Tags"."id" = "AdTags"."tagId"
-                      )
-                    ON "Ad"."id" = "AdTags"."adsId"
-                    WHERE "Ad"."id" = ${req.body.adsId}
-                  `)
-                ],
-              }
-            }, 
-            attributes: []
-          }
-        },
-        {
-          model: Tag,
-          required: false
-        }
-      ]
-    })
-
-    // const ads = await AdTag.findAll({
-    //   attributes: [
-    //     sequelize.literal(
-    //       `(
-    //         SELECT
-    //           DISTINCT("AdTags"."adsId")
-    //         FROM "AdTags"
-    //       )`
-    //     ),
-    //     '"AdTags"."adsId"'
-    //   ],
+    // receive posts with similarly its tags which were provided from post
+    // const ads = await Ad.findAll({
     //   where: { 
-    //     tagId: {
-    //       [Op.in]: [
-    //         sequelize.literal(` 
-    //           SELECT
-    //             "Tags"."id" as "tagId"
-    //           FROM "Ads" AS "Ad" 
-    //           INNER JOIN (
-    //             "AdTags"
-    //             INNER JOIN "Tags"
+    //     id: {
+    //       [Op.and]: [
+    //         { [Op.ne]: req.body.adsId },
+    //         { [Op.in]: [
+    //           sequelize.literal(`
+    //             SELECT "AdTags"."adsId" as "adsId"
+    //             FROM "AdTags"
+    //             LEFT JOIN "Tags"
     //             ON "Tags"."id" = "AdTags"."tagId"
+    //             WHERE "Tags"."id" IN (
+    //               SELECT
+    //                 "AdTags"."tagId" as "tagId"
+    //               FROM "AdTags"
+    //               LEFT JOIN "Ads"
+    //               ON "Ads"."id" = "AdTags"."adsId"
+    //               WHERE "Ads"."id" = ${req.body.adsId}
     //             )
-    //           ON "Ad"."id" = "AdTags"."adsId"
-    //           WHERE "Ad"."id" = ${req.body.adsId}
-    //         `)
-    //       ],
+    //           `)
+    //         ] }
+    //       ]
     //     },
-    //     adsId: {
-    //       [Op.ne]: req.body.adsId
-    //     }
     //   },
     //   include: [
     //     {
-    //       model: Ad,
-    //       include: {
-    //         model: Tag,
+    //       model: Tag,
+    //       through: {
+    //         attributes: []
     //       }
-    //     }
+    //     },
     //   ]
     // })
 
