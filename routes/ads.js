@@ -6,7 +6,7 @@ const sharp = require('sharp')
 const archiver = require('archiver')
 const { v4: uuid } = require('uuid')
 
-const { Ad, AdTag, User, Model, Brand } = require('../models')
+const { Ad, Tag, AdTag, User, Model, Brand } = require('../models')
 const { checkIfOwner } = require('../middlewares/ads')
 const { createAd } = require('../validations/ads')
 const { imageUploader, videoUploader } = require('../config/multer')
@@ -39,6 +39,9 @@ router.get('/:id', async (req, res, next) => {
           model: Model,
           include: Brand
         },
+        {
+          model: Tag
+        }
       ]
     })
 
