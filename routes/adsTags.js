@@ -88,6 +88,16 @@ router.get('/', async (req, res, next) => {
     //   ]
     // })
 
+    const ads = await sequelize.query(`
+      SELECT "Ads"."id"
+      FROM "Ads"
+      WHERE "Ads"."tags" <@ (
+        SELECT "Ads"."tags"
+        FROM "Ads"
+        WHERE "Ads"."id" = ${1}
+      )
+    `)
+
     res.json(ads)
   } catch (e) {
     next(e)
