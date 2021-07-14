@@ -18,23 +18,39 @@ router.get('/search', async (req, res, next) => {
   const { name } = req.query;
 
   try {
-    // const models = await Model.findAll({
-    //   where: { 
-    //     [Op.and]: [
-    //       sequelize.literal(`
-    //       `)
-    //     ]
-    //   },
-    // });
-    const models = await sequelize.query(`
-      SELECT 
-        "Models"."name" as "name",
-        "Models"."id" as "id"
-      FROM "Models"
-      WHERE UPPER("Models"."name") LIKE UPPER('${name}%')
-        OR UPPER("Models"."name") LIKE UPPER('%${name}%')
-      ORDER BY UPPER("Models"."name") LIKE UPPER('${name}%') DESC
-    `)
+    // search names and sorting them
+    // const models = await sequelize.query(`
+    //   SELECT 
+    //     "Models"."name" as "name",
+    //     "Models"."id" as "id"
+    //   FROM "Models"
+    //   WHERE UPPER("Models"."name") LIKE UPPER('${name}%')
+    //     OR UPPER("Models"."name") LIKE UPPER('%${name}%')
+    //   ORDER BY 
+    //     UPPER("Models"."name") LIKE UPPER('${name}%') DESC,
+    //     "Models"."name" ASC
+    // `)
+    // or
+    const models = await Model.findAll({
+      where: {
+        id: {
+          [Op.in]: [
+            sequelize.literal(`
+              SELECT 
+                "Models"."id" as "id"
+              FROM "Models"
+              WHERE UPPER("Models"."name") LIKE UPPER('${name}%')
+                OR UPPER("Models"."name") LIKE UPPER('%${name}%')
+              `,
+            )
+          ]
+        }
+      },
+      order: [
+        [sequelize.literal(`UPPER("Model"."name") LIKE UPPER('${name}%') DESC`)],
+        ['name', 'ASC']
+      ]
+    })
 
     res.json(models)
   } catch (e) {
