@@ -5,8 +5,8 @@ module.exports = (sequelize, DataTypes) => {
   })
 
   Friendship.associate = (models) => {
-    Friendship.belongsTo(models.User, { foreignKey: 'u1' })
-    Friendship.belongsTo(models.User, { foreignKey: 'u2' })
+    Friendship.belongsTo(models.User, { as: 'user1', foreignKey: 'u1' })
+    Friendship.belongsTo(models.User, { as: 'user2', foreignKey: 'u2' })
   }
 
   return Friendship

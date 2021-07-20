@@ -30,9 +30,8 @@ module.exports = (sequelize, DataTypes) => {
 
   User.associate = (models) => {
     User.hasMany(models.Ad, { foreignKey: "userId" })
-    User.belongsToMany(models.User, { through: models.Friendship, foreignKey: "u1" })
-    User.belongsToMany(models.User, { through: models.Friendship, foreignKey: "u2" })
-    // create alias
+    User.belongsToMany(models.User, { through: models.Friendship, as: 'user2', foreignKey: "u1" })
+    User.belongsToMany(models.User, { through: models.Friendship, as: 'user1', foreignKey: "u2" })
   }
 
   return User
