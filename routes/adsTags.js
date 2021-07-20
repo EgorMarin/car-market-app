@@ -5,7 +5,7 @@ const sequelize = require('../config/db')
 const { Ad, AdTag, Tag } = require('../models');
 
 router.get('/', async (req, res, next) => {
-  const { tags } = req.body;
+  const { tags, adsId } = req.body;
 
   try {
     // receive all ads by selected tags*
@@ -16,12 +16,16 @@ router.get('/', async (req, res, next) => {
     //         sequelize.literal(`
     //           SELECT "AdTags"."adsId"
     //           FROM "AdTags"
-    //           WHERE "AdTags"."tagId" IN (${tags})
+    //           WHERE "AdTags"."tagId" IN (:tags)
     //           GROUP BY "AdTags"."adsId"
-    //           HAVING COUNT("AdTags"."tagId") = ${tags.length}
+    //           HAVING COUNT("AdTags"."tagId") = :tags.length
     //         `)
     //       ]
     //     }
+    //   },
+    //   replacements: {
+    //     tags,
+    //      tagsLength: tags.length
     //   },
     //   include: {
     //     model: Tag,
@@ -52,8 +56,23 @@ router.get('/', async (req, res, next) => {
     //     }
     //   }
     // );
+    // *another way
+    // const ads = await Ad.findAll({
+    //   include: {
+    //     model: Tag,
+    //     attributes: [],
+    //     where: {
+    //       id: tags
+    //     },
+    //     through: {
+    //       attributes: []
+    //     }
+    //   },
+    //   group: ['"Ad".id'],
+    //   having: sequelize.where(sequelize.fn('COUNT', sequelize.col('"Tags"."id"')), '=', tags.length),
+    // })
 
-    // receive posts with similarly its tags which were provided from post
+    // receive posts with similarly its tags which were provided from post*
     // const ads = await Ad.findAll({
     //   where: { 
     //     id: {
@@ -87,16 +106,43 @@ router.get('/', async (req, res, next) => {
     //     },
     //   ]
     // })
+    // *another way
+    // const ads = await Ad.findAll({
+    //   where: {
+    //     id: {
+    //       [Op.ne]: adsId
+    //     }
+    //   },
+    //   include: {
+    //     model: Tag,
+    //     where: {
+    //       id: [
+    //         sequelize.literal(`
+    //           SELECT "Tags"."id"
+    //           FROM "AdTags"
+    //           LEFT JOIN "Tags"
+    //           ON "Tags"."id" = "AdTags"."tagId"
+    //           WHERE "AdTags"."adsId" = :adsId
+    //         `)
+    //       ]
+    //     },
+    //     through: {
+    //       attributes: []
+    //     }
+    //   },
+    //   replacements: { adsId }
+    // })
 
-    const ads = await sequelize.query(`
-      SELECT "Ads"."id"
-      FROM "Ads"
-      WHERE "Ads"."tags" <@ (
-        SELECT "Ads"."tags"
-        FROM "Ads"
-        WHERE "Ads"."id" = ${1}
-      )
-    `)
+    // get posts by provided posts tags
+    // const ads = await sequelize.query(`
+    //   SELECT "Ads"."id"
+    //   FROM "Ads"
+    //   WHERE "Ads"."tags" <@ (
+    //     SELECT "Ads"."tags"
+    //     FROM "Ads"
+    //     WHERE "Ads"."id" = ${1}
+    //   )
+    // `)
 
     res.json(ads)
   } catch (e) {

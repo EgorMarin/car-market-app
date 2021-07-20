@@ -2,9 +2,13 @@ const router = require('express').Router();
 
 const { User, Ad, Model, Brand } = require('../models');
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
-    const users = await User.findAll()
+    const users = await User.findAll({
+      attributes: {
+        exclude: ['password', 'refreshToken', 'resetPasswordToken']
+      }
+    })
 
     res.json(users)
   } catch (e) {
@@ -12,7 +16,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   const id = req.params.id
 
   try {
@@ -33,7 +37,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     await User.destroy({ where: { id: req.params.id } })
 

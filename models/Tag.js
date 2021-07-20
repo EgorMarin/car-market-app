@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
   })
 
   Tag.associate = (models) => {
-    Tag.belongsToMany(models.Ad, { through: 'AdTags', foreignKey: "tagId" })
+    Tag.belongsToMany(models.Ad, { through: models.AdTag, foreignKey: "tagId" })
   }
 
   return Tag
